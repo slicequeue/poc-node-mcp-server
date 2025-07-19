@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 // MCP 서버와 관련된 클래스와 함수들을 import 합니다.
 // McpServer: MCP 서버 인스턴스를 생성할 때 사용합니다.
 // ResourceTemplate: 리소스의 URI 템플릿을 정의할 때 사용합니다.
@@ -6,6 +8,75 @@
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+
+/**
+ * 로깅 유틸리티
+ */
+const log = {
+  info: (message: string, data?: any) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] INFO: ${message}`, data ? JSON.stringify(data, null, 2) : '');
+  },
+  error: (message: string, error?: any) => {
+    const timestamp = new Date().toISOString();
+    console.error(`[${timestamp}] ERROR: ${message}`, error ? JSON.stringify(error, null, 2) : '');
+  },
+  tool: (name: string, params: any, result: any) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] TOOL_CALL: ${name}`);
+    console.log(`  Parameters: ${JSON.stringify(params, null, 2)}`);
+    console.log(`  Result: ${JSON.stringify(result, null, 2)}`);
+    console.log('---');
+  },
+  resource: (name: string, uri: string, result: any) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] RESOURCE_ACCESS: ${name}`);
+    console.log(`  URI: ${uri}`);
+    console.log(`  Result: ${JSON.stringify(result, null, 2)}`);
+    console.log('---');
+  }
+};
+
+/**
+ * 도구 실행을 래핑하는 헬퍼 함수
+ */
+const withLogging = <T extends any[], R>(
+  name: string,
+  fn: (...args: T) => Promise<R>
+) => {
+  return async (...args: T): Promise<R> => {
+    try {
+      log.info(`${name} 호출됨`, args[0]);
+      const result = await fn(...args);
+      log.tool(name, args[0], result);
+      return result;
+    } catch (error) {
+      log.error(`${name} 실행 중 오류 발생`, error);
+      throw error;
+    }
+  };
+};
+
+/**
+ * 리소스 실행을 래핑하는 헬퍼 함수
+ */
+const withResourceLogging = <T extends any[], R>(
+  name: string,
+  fn: (...args: T) => Promise<R>
+) => {
+  return async (...args: T): Promise<R> => {
+    try {
+      const uri = args[0]?.href || 'unknown';
+      log.info(`${name} 리소스 접근됨 - URI: ${uri}`);
+      const result = await fn(...args);
+      log.resource(name, uri, result);
+      return result;
+    } catch (error) {
+      log.error(`${name} 리소스 실행 중 오류 발생`, error);
+      throw error;
+    }
+  };
+};
 
 /**
  * Demo MCP 서버
@@ -30,6 +101,8 @@ const server = new McpServer({
   description: "다양한 계산 도구와 사용자 정보 리소스를 제공하는 MCP 서버입니다. 수학 계산, 날씨 정보 조회, 사용자 프로필 생성 등의 기능을 지원합니다."
 });
 
+log.info("MCP 서버가 시작되었습니다.", { name: "Demo", version: "1.0.0" });
+
 /**
  * 수학 계산 도구: add
  * 
@@ -47,13 +120,10 @@ const server = new McpServer({
  */
 server.tool(
   'add',
-  {
-    a: z.number(),
-    b: z.number()
-  },
-  async ({ a, b }) => ({
+  { a: z.number(), b: z.number() },
+  withLogging('add', async ({ a, b }) => ({
     content: [{ type: "text", text: String(a + b) }]
-  })
+  }))
 );
 
 /**
@@ -78,11 +148,9 @@ server.registerTool(
     description: "도시의 날씨 정보를 반환합니다. 기온, 습도, 날씨 상태를 포함한 상세한 정보를 제공합니다.",
     inputSchema: { city: z.string() }
   },
-  async ({ city }) => {
+  withLogging('get_weather', async ({ city }) => {
     // 랜덤 날씨 정보 생성
-    const weatherConditions = [
-      "맑음", "흐림", "비", "눈", "안개", "구름 많음", "천둥번개"
-    ];
+    const weatherConditions = ["맑음", "흐림", "비", "눈", "안개", "구름 많음", "천둥번개"];
     const temperatures = Array.from({ length: 41 }, (_, i) => i - 10); // -10도 ~ 30도
     const humidities = Array.from({ length: 101 }, (_, i) => i); // 0% ~ 100%
 
@@ -96,7 +164,7 @@ server.registerTool(
         text: `${city}의 현재 날씨: ${randomWeather}, 기온: ${randomTemp}°C, 습도: ${randomHumidity}%`
       }]
     };
-  }
+  })
 );
 
 /**
@@ -117,12 +185,12 @@ server.registerTool(
 server.resource(
   "greeting",
   new ResourceTemplate("greeting://{name}", { list: undefined }),
-  async (uri, { name }) => ({
+  withResourceLogging('greeting', async (uri, { name }) => ({
     contents: [{
       uri: uri.href,
       text: `안녕하세요, ${name}님!`
     }]
-  })
+  }))
 );
 
 /**
@@ -153,7 +221,7 @@ server.registerResource(
     title: "사용자 프로필 정보",
     description: "username에 해당하는 사용자의 프로필 정보를 반환합니다. 직책, 부서, 위치, 나이, 경력 등의 정보를 포함합니다."
   },
-  async (uri: URL) => {
+  withResourceLogging('user_profile', async (uri: URL) => {
     const username = uri.pathname.split('/').pop() || 'unknown';
     
     // 랜덤 사용자 정보 생성
@@ -173,11 +241,15 @@ server.registerResource(
         text: `사용자: ${username}\n직책: ${randomRole}\n부서: ${randomDept}\n위치: ${randomLocation}\n나이: ${randomAge}세\n경력: ${randomExperience}년`
       }]
     };
-  }
+  })
 );
 
 // StdioServerTransport를 생성하여 표준 입출력을 통해 서버와 클라이언트가 통신할 수 있도록 합니다.
 const transport = new StdioServerTransport();
 
+log.info("Transport 연결을 시작합니다...");
+
 // 서버를 transport(표준 입출력)와 연결하여 클라이언트와 통신할 수 있도록 합니다.
 await server.connect(transport);
+
+log.info("MCP 서버가 성공적으로 시작되었습니다. LLM 요청을 기다리는 중...");

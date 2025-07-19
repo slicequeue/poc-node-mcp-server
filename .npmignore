@@ -1,0 +1,30 @@
+# 소스 코드 (빌드된 파일만 포함)
+src/
+
+# 개발 도구 설정
+tsconfig.json
+
+# 테스트 파일
+test-mcp.js
+
+# 개발 문서
+MCP_Learning_Guide.md
+
+# Git 관련
+.git/
+.gitignore
+
+# IDE 설정
+.vscode/
+.idea/
+
+# 로그 파일
+*.log
+
+# 임시 파일
+*.tmp
+*.temp
+
+# OS 생성 파일
+.DS_Store
+Thumbs.db 
