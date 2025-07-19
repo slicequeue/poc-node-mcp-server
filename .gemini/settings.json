@@ -4,10 +4,16 @@
       "command": "node",
       "args": ["dist/index.js"],
       "cwd": ".",
-      "description": "Demo MCP 서버 - add 도구와 greeting 리소스 제공",
+      "description": "다양한 계산 도구와 사용자 정보 리소스를 제공하는 MCP 서버입니다. 수학 계산(add), 날씨 정보 조회(get_weather), 사용자 프로필 생성(user_profile), 인사말 생성(greeting) 등의 기능을 지원합니다.",
       "metadata": {
         "version": "1.0.0",
-        "author": "Demo"
+        "author": "Demo",
+        "features": [
+          "수학 계산 도구 (add)",
+          "날씨 정보 조회 (get_weather)", 
+          "사용자 프로필 생성 (user_profile)",
+          "인사말 생성 (greeting)"
+        ]
       }
     }
   },
