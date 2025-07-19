@@ -8,7 +8,7 @@
     "typescript": "^5.8.3"
   },
   "name": "poc-node-mcp-server",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -24,7 +24,14 @@
   "author": "",
   "license": "ISC",
   "description": "Demo MCP 서버 - 다양한 계산 도구와 사용자 정보 리소스를 제공합니다.",
-  "keywords": ["mcp", "model-context-protocol", "ai", "llm", "tools", "resources"],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "llm",
+    "tools",
+    "resources"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/your-username/poc-node-mcp-server.git"
