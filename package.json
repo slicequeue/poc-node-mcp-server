@@ -32,9 +32,10 @@
     "tools",
     "resources"
   ],
+  "homepage": "https://github.com/slicequeue/poc-node-mcp-server",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/poc-node-mcp-server.git"
+    "url": "https://github.com/slicequeue/poc-node-mcp-server.git"
   },
   "engines": {
     "node": ">=18.0.0"
