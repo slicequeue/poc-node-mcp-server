@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "demo-mcp-server": {
+      "command": "node",
+      "args": ["dist/index.js"],
+      "cwd": ".",
+      "description": "Demo MCP 서버 - add 도구와 greeting 리소스 제공",
+      "metadata": {
+        "version": "1.0.0",
+        "author": "Demo"
+      }
+    }
+  },
+  "defaultModel": "gemini-1.5-flash",
+  "temperature": 0.7,
+  "maxTokens": 4096
+} 
